@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Auth;
 use Validator;
 use App\Models\User;
@@ -15,20 +16,18 @@ class UserController extends Controller
 {
     public function index(){
 
-        $users = User::with('board')->find(Auth::user()->id)->toArray();
         $user = User::find(Auth::user()->id)->toArray();
-       // dd($users);
-        //$board['tasks'] = [];
-         foreach($users['board'] as $brd){
+     
+        $boards = Board::where('user_id',Auth::user()->id)->get()->toArray();
+
+         foreach($boards as $brd){
             $arr1 = $brd;
             $datatask = \App\Helpers\Helper::getTask($brd['id']);
             
-           $arr[] =   array_merge($arr1,['tasks'=>$datatask]);
-               //dd($brd,$board);
-           
+           $arr[] =   array_merge($arr1,['tasks'=>$datatask]);           
          }
       $data =   array_merge($user,['boards'=>$arr]);
-         //dd($data,$arr);
+
        return response()
             ->json(['message' => 'User data','data'=>$data]);
       
@@ -50,7 +49,7 @@ class UserController extends Controller
          $user['name'] = $request->name ? $request->name : $user->name;
          $user['username'] = $request->username ? $request->username : $user->username;
          $user['email'] = $request->email ? $request->email : $user->email;
-         $user['password'] = $request->password ? $request->password : $user->password;
+         $user['password'] = $request->password ? Hash::make($request->password) : $user->password;
 
          $user->save();
          return response()
